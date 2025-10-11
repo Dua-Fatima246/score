@@ -19,27 +19,39 @@ export default function Game() {
   });
 
   const keysRef = useRef({});
-  const mobileKeysRef = useRef({ up: false, down: false, left: false, right: false });
+  const mobileKeysRef = useRef({
+    up: false,
+    down: false,
+    left: false,
+    right: false,
+  });
 
-  // Responsive canvas
+  // ✅ Responsive canvas
   useEffect(() => {
     const handleResize = () =>
-      setCanvasSize({ width: window.innerWidth * 0.85, height: window.innerHeight * 0.6 });
+      setCanvasSize({
+        width: window.innerWidth * 0.85,
+        height: window.innerHeight * 0.6,
+      });
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // ✅ Save score (with console log for debugging)
+  // ✅ Save score
   const saveScore = async () => {
     try {
       console.log("💾 Saving score:", { playerName, score, level });
-      await axios.post("http://localhost:5000/api/scores", { playerName, score, level });
+      await axios.post("http://localhost:5000/api/scores", {
+        playerName,
+        score,
+        level,
+      });
     } catch (err) {
       console.error("❌ Error saving score:", err);
     }
   };
 
-  // Game loop
+  // ✅ Game loop
   useEffect(() => {
     if (gameOver || isPaused) return;
 
@@ -50,6 +62,7 @@ export default function Game() {
 
     let playerBall = createPlayerBall(width, height);
     let { stars, obstacles } = makeLevelEntities(level, width, height);
+
     const timer = setInterval(() => setTimeLeft((t) => t - 1), 1000);
     let animation;
 
@@ -57,12 +70,13 @@ export default function Game() {
       cancelAnimationFrame(animation);
       clearInterval(timer);
       setGameOver(true);
-      saveScore(); // ✅ Save on collision game over
+      saveScore();
     };
 
     const loop = () => {
       if (isPaused) return;
 
+      // Background gradient
       const gradient = ctx.createLinearGradient(0, 0, width, height);
       gradient.addColorStop(0, "#a1c4fd");
       gradient.addColorStop(0.5, "#c2e9fb");
@@ -81,13 +95,23 @@ export default function Game() {
       });
 
       const step = 7;
-      if (keysRef.current["ArrowUp"] || mobileKeysRef.current.up) playerBall.y -= step;
-      if (keysRef.current["ArrowDown"] || mobileKeysRef.current.down) playerBall.y += step;
-      if (keysRef.current["ArrowLeft"] || mobileKeysRef.current.left) playerBall.x -= step;
-      if (keysRef.current["ArrowRight"] || mobileKeysRef.current.right) playerBall.x += step;
+      if (keysRef.current["ArrowUp"] || mobileKeysRef.current.up)
+        playerBall.y -= step;
+      if (keysRef.current["ArrowDown"] || mobileKeysRef.current.down)
+        playerBall.y += step;
+      if (keysRef.current["ArrowLeft"] || mobileKeysRef.current.left)
+        playerBall.x -= step;
+      if (keysRef.current["ArrowRight"] || mobileKeysRef.current.right)
+        playerBall.x += step;
 
-      playerBall.x = Math.max(playerBall.r, Math.min(width - playerBall.r, playerBall.x));
-      playerBall.y = Math.max(playerBall.r, Math.min(height - playerBall.r, playerBall.y));
+      playerBall.x = Math.max(
+        playerBall.r,
+        Math.min(width - playerBall.r, playerBall.x)
+      );
+      playerBall.y = Math.max(
+        playerBall.r,
+        Math.min(height - playerBall.r, playerBall.y)
+      );
 
       stars = stars.filter((s) => {
         const dist = Math.hypot(playerBall.x - s.x, playerBall.y - s.y);
@@ -135,19 +159,20 @@ export default function Game() {
     };
   }, [level, isPaused, canvasSize]);
 
-  // ✅ Added saveScore() call when time runs out
+  // ✅ Save score when timer ends
   useEffect(() => {
     if (timeLeft <= 0 && !gameOver) {
       setGameOver(true);
-      saveScore(); // ✅ Save score when timer ends
+      saveScore();
     }
   }, [timeLeft]);
 
+  // ✅ Bright-dark collecting ball
   const createPlayerBall = (width, height) => ({
     x: width / 2,
     y: height / 2,
     r: 15,
-    color: `hsl(${Math.random() * 360}, 100%, 75%)`,
+    color: `hsl(${Math.random() * 360}, 90%, 45%)`,
   });
 
   const drawBall = (ctx, x, y, r, color) => {
@@ -182,13 +207,15 @@ export default function Game() {
     ctx.restore();
   };
 
+  // ✅ Stars darker
   const makeLevelEntities = (lvl, width, height) => {
     const stars = Array.from({ length: 5 + lvl }, () => ({
       x: Math.random() * (width - 60) + 30,
       y: Math.random() * (height - 60) + 30,
       r: 10 + Math.random() * 5,
-      color: `hsl(${Math.random() * 360}, 100%, 75%)`,
+      color: `hsl(${Math.random() * 360}, 100%, 40%)`,
     }));
+
     const obstacles = Array.from({ length: lvl }, () => ({
       x: Math.random() * (width - 60) + 20,
       y: Math.random() * (height - 60) + 20,
@@ -196,10 +223,12 @@ export default function Game() {
       h: 10 + Math.random() * 10,
       dx: Math.random() < 0.5 ? -2 : 2,
     }));
+
     return { stars, obstacles };
   };
 
-  const handleMobileMove = (key, state) => (mobileKeysRef.current[key] = state);
+  const handleMobileMove = (key, state) =>
+    (mobileKeysRef.current[key] = state);
 
   return (
     <div
@@ -207,36 +236,34 @@ export default function Game() {
         textAlign: "center",
         fontFamily: "sans-serif",
         minHeight: "100vh",
-        background: "linear-gradient(to bottom, #a1c4fd, #c2e9fb, #fbc2eb)",
+        backgroundColor: "black",
         width: "100vw",
         display: "flex",
         flexDirection: "column",
         justifyContent: gameOver ? "center" : "flex-start",
         alignItems: "center",
+        position: "relative",
       }}
     >
       {!gameOver ? (
         <>
+          {/* ✅ Centered Info Bar */}
           <div
             style={{
               display: "flex",
-              justifyContent: "space-between",
+              justifyContent: "center",
               alignItems: "center",
-              padding: "10px 50px",
+              padding: "10px 0",
               color: "#b3ef0ffd",
               width: "100%",
+              textAlign: "center",
             }}
           >
             <h2>
               {playerName} | Score: {score} | Level: {level} | Time: {timeLeft}
             </h2>
           </div>
-          <button
-            onClick={() => setIsPaused((p) => !p)}
-            style={{ marginBottom: "10px", padding: "6px 12px" }}
-          >
-            {isPaused ? "Resume" : "Pause"}
-          </button>
+
           <canvas
             ref={canvasRef}
             width={canvasSize.width}
@@ -249,6 +276,8 @@ export default function Game() {
               maxWidth: "90%",
             }}
           />
+
+          {/* ✅ Mobile Controls */}
           <div
             style={{
               marginTop: "15px",
@@ -282,12 +311,28 @@ export default function Game() {
               ➡️
             </button>
           </div>
+
+          {/* ✅ Pause Button below arrows */}
+          <button
+            onClick={() => setIsPaused((p) => !p)}
+            style={{
+              marginTop: "15px",
+              padding: "8px 16px",
+              borderRadius: "6px",
+              background: "#5fe8a6ff",
+              cursor: "pointer",
+              fontWeight: "bold",
+            }}
+          >
+            {isPaused ? "Resume" : "Pause"}
+          </button>
         </>
       ) : (
         <div
           style={{
             textAlign: "center",
-            background: "linear-gradient(135deg, #fbc2eb, #b2ecacff, #15c6e5ff)",
+            background:
+              "linear-gradient(135deg, #fbc2eb, #b2ecacff, #15c6e5ff)",
             padding: "40px 70px",
             borderRadius: "25px",
             boxShadow: "0 10px 30px rgba(0,0,0,0.3)",
@@ -305,9 +350,16 @@ export default function Game() {
           >
             Game Over!
           </h2>
-          <p style={{ fontSize: "1.3rem", marginBottom: "20px", color: "#fff" }}>
+          <p
+            style={{
+              fontSize: "1.3rem",
+              marginBottom: "20px",
+              color: "#fff",
+            }}
+          >
             Score: {score}
           </p>
+
           <div style={{ display: "flex", justifyContent: "center", gap: "20px" }}>
             <button
               onClick={() => navigate("/")}
@@ -334,6 +386,7 @@ export default function Game() {
           </div>
         </div>
       )}
+
       <style>
         {`
           @keyframes fadeIn {
