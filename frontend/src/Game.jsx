@@ -62,15 +62,15 @@ export default function Game() {
 
     let playerBall = createPlayerBall(width, height);
     let { stars, obstacles } = makeLevelEntities(level, width, height);
-
     const timer = setInterval(() => setTimeLeft((t) => t - 1), 1000);
     let animation;
 
-    const gameOverTrigger = () => {
+    // ✅ Updated Game Over Trigger (waits to save score)
+    const gameOverTrigger = async () => {
       cancelAnimationFrame(animation);
       clearInterval(timer);
       setGameOver(true);
-      saveScore();
+      await saveScore(); // ✅ wait until saved
     };
 
     const loop = () => {
@@ -87,6 +87,7 @@ export default function Game() {
       drawBall(ctx, playerBall.x, playerBall.y, playerBall.r, playerBall.color);
       stars.forEach((s) => drawStar(ctx, s.x, s.y, s.r, s.color));
 
+      // Obstacles
       obstacles.forEach((o) => {
         ctx.fillStyle = "rgba(255,70,70,0.9)";
         ctx.fillRect(o.x, o.y, o.w, o.h);
@@ -94,6 +95,7 @@ export default function Game() {
         if (o.x < 0 || o.x + o.w > width) o.dx *= -1;
       });
 
+      // Movement
       const step = 7;
       if (keysRef.current["ArrowUp"] || mobileKeysRef.current.up)
         playerBall.y -= step;
@@ -113,6 +115,7 @@ export default function Game() {
         Math.min(height - playerBall.r, playerBall.y)
       );
 
+      // Star collection
       stars = stars.filter((s) => {
         const dist = Math.hypot(playerBall.x - s.x, playerBall.y - s.y);
         if (dist < playerBall.r + s.r) {
@@ -122,6 +125,7 @@ export default function Game() {
         return true;
       });
 
+      // Collision with obstacle
       for (let o of obstacles) {
         if (
           playerBall.x + playerBall.r > o.x &&
@@ -133,6 +137,7 @@ export default function Game() {
         }
       }
 
+      // Next level
       if (stars.length === 0) {
         setLevel((prev) => prev + 1);
         setTimeLeft(40);
@@ -167,7 +172,7 @@ export default function Game() {
     }
   }, [timeLeft]);
 
-  // ✅ Bright-dark collecting ball
+  // ✅ Ball + Stars + Obstacles
   const createPlayerBall = (width, height) => ({
     x: width / 2,
     y: height / 2,
@@ -207,7 +212,6 @@ export default function Game() {
     ctx.restore();
   };
 
-  // ✅ Stars darker
   const makeLevelEntities = (lvl, width, height) => {
     const stars = Array.from({ length: 5 + lvl }, () => ({
       x: Math.random() * (width - 60) + 30,
@@ -247,7 +251,7 @@ export default function Game() {
     >
       {!gameOver ? (
         <>
-          {/* ✅ Centered Info Bar */}
+          {/* ✅ Info Bar */}
           <div
             style={{
               display: "flex",
@@ -312,7 +316,7 @@ export default function Game() {
             </button>
           </div>
 
-          {/* ✅ Pause Button below arrows */}
+          {/* ✅ Pause Button */}
           <button
             onClick={() => setIsPaused((p) => !p)}
             style={{

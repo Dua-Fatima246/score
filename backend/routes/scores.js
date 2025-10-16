@@ -3,26 +3,35 @@ import mongoose from "mongoose";
 
 const router = express.Router();
 
-// Schema
+// ✅ Schema
 const scoreSchema = new mongoose.Schema({
-  playerName: String,
-  score: Number,
-  level: Number,
+  playerName: { type: String, required: true },
+  score: { type: Number, required: true },
+  level: { type: Number, required: true },
   createdAt: { type: Date, default: Date.now },
 });
 
-// Prevent model overwrite error in dev
+// ✅ Model
 const Score = mongoose.models.Score || mongoose.model("Score", scoreSchema);
 
 // ✅ POST /api/scores → Save new score
 router.post("/scores", async (req, res) => {
   try {
     const { playerName, score, level } = req.body;
+    console.log("📩 Received score:", req.body);
+
     const newScore = new Score({ playerName, score, level });
-    await newScore.save();
-    res.status(201).json(newScore);
+
+    console.log("🧠 Using DB:", mongoose.connection.name);
+    console.log("📁 Collection:", Score.collection.name);
+
+    const saved = await newScore.save();
+
+    console.log("✅ Saved to MongoDB:", saved);
+    res.status(201).json(saved);
   } catch (err) {
-    console.error("❌ Error saving score:", err);
+    console.error("❌ Error saving score:", err.message);
+    console.error(err.stack);
     res.status(500).json({ error: "Failed to save score" });
   }
 });

@@ -6,19 +6,21 @@ export default function Leaderboard() {
   const [scores, setScores] = useState([]);
   const navigate = useNavigate();
 
+  // ✅ Dynamic backend URL (auto works on localhost & Vercel)
+  const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
   // ✅ Fetch leaderboard data
   useEffect(() => {
     const fetchScores = async () => {
       try {
-        // ✅ Use the correct route name
-        const res = await axios.get("http://localhost:5000/api/scores");
+        const res = await axios.get(`${API_BASE_URL}/api/scores`);
         setScores(res.data);
       } catch (err) {
         console.error("❌ Error fetching leaderboard:", err);
       }
     };
     fetchScores();
-  }, []);
+  }, [API_BASE_URL]);
 
   return (
     <div
@@ -52,8 +54,8 @@ export default function Leaderboard() {
 
       <div
         style={{
-           minHeight: "50vh", // ✅ full viewport height
-           width: "90vw", // ✅ full viewport width
+          minHeight: "50vh",
+          width: "90vw",
           overflowX: "auto",
         }}
       >
@@ -77,8 +79,13 @@ export default function Leaderboard() {
           <tbody>
             {scores.length > 0 ? (
               scores.map((s, i) => (
-                <tr key={i} style={{ textAlign: "center", borderBottom: "1px solid #ddd" }}>
-                  {/* ✅ Match your backend model (playerName, score, level) */}
+                <tr
+                  key={i}
+                  style={{
+                    textAlign: "center",
+                    borderBottom: "1px solid #ddd",
+                  }}
+                >
                   <td style={{ padding: "10px" }}>{s.playerName}</td>
                   <td style={{ padding: "10px" }}>{s.score}</td>
                   <td style={{ padding: "10px" }}>{s.level}</td>
@@ -86,7 +93,10 @@ export default function Leaderboard() {
               ))
             ) : (
               <tr>
-                <td colSpan="3" style={{ padding: "15px", textAlign: "center" }}>
+                <td
+                  colSpan="3"
+                  style={{ padding: "15px", textAlign: "center" }}
+                >
                   No scores yet
                 </td>
               </tr>
